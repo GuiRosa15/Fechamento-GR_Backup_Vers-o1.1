@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual environments
+env/
+venv/
+.venv/
+ENV/
+
+# Environment variables
+.env
+
+# IDEs
+.vscode/
+.idea/
+
+# Static/uploads and user data
+static/uploads/
+*.sqlite3
+*.db
+
+# Byte-compiled / cache
+.python-version
+.pytest_cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Logs
+*.log
+
+# Excel or large data files (uncomment if needed)
+# *.xlsx
+# *.xls

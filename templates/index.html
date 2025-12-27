@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+
+{% block content %}
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+<style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .nav-tabs .nav-link { border-radius: 50px; margin-right: 5px; border: 1px solid transparent; }
+    .nav-tabs .nav-link.active { background-color: #fff; border-color: #dee2e6 #dee2e6 #fff; font-weight: 800; color: var(--cor-roxo); }
+    .nav-tabs .nav-link:hover { background-color: rgba(255,255,255,0.5); }
+</style>
+
+<div class="row no-print">
+    <div class="col-md-6">
+        
+        <ul class="nav nav-tabs mb-4 border-bottom-0 flex-nowrap overflow-auto no-scrollbar" id="myTab" role="tablist" style="white-space: nowrap;">
+            <li class="nav-item"><button class="nav-link active text-danger px-3 small" id="pura-tab" data-bs-toggle="tab" data-bs-target="#pura" type="button"><i class="bi bi-lightning-charge-fill"></i> Pura</button></li>
+            <li class="nav-item"><button class="nav-link text-secondary px-3 small" id="estrategia-tab" data-bs-toggle="tab" data-bs-target="#estrategia" type="button"><i class="bi bi-gear-fill"></i> Padrão</button></li>
+            <li class="nav-item"><button class="nav-link text-primary px-3 small" id="m25-tab" data-bs-toggle="tab" data-bs-target="#m25" type="button"><i class="bi bi-grid-3x3-gap-fill"></i> M.25</button></li>
+            <li class="nav-item"><button class="nav-link text-success px-3 small" id="surpresa-tab" data-bs-toggle="tab" data-bs-target="#surpresa" type="button"><i class="bi bi-dice-5-fill"></i> Sorte</button></li>
+            <li class="nav-item"><button class="nav-link text-dark px-3 small" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual" type="button"><i class="bi bi-pencil-fill"></i> Manual</button></li>
+        </ul>
+
+        <div class="tab-content" id="myTabContent">
+            
+            <div class="tab-pane fade show active" id="pura" role="tabpanel">
+                <div class="alert alert-danger bg-white border-danger shadow-sm rounded-4 mb-3">
+                    <div class="d-flex align-items-start">
+                        <i class="bi bi-lightning-charge-fill fs-4 me-2 text-danger"></i>
+                        <div class="small text-muted"><strong>Poder Estatístico:</strong> Analisa os últimos 10 concursos. Gera: Lógica, Equilíbrio e Meio.</div>
+                    </div>
+                </div>
+                <div class="card border-danger shadow-sm rounded-4 mb-4">
+                    <div class="card-header bg-danger text-white border-0">
+                        <h5 class="mb-0"><i class="bi bi-cpu-fill"></i> Gerador Automático</h5>
+                    </div>
+                    <div class="card-body text-center p-4">
+                        <div class="row g-2 mb-4">
+                            <div class="col-4"><div class="border rounded-4 p-2 bg-light"><small class="d-block fw-bold text-danger">Jogo 1</small><small class="text-muted" style="font-size: 10px;">Lógica</small></div></div>
+                            <div class="col-4"><div class="border rounded-4 p-2 bg-light"><small class="d-block fw-bold text-primary">Jogo 2</small><small class="text-muted" style="font-size: 10px;">Equilíbrio</small></div></div>
+                            <div class="col-4"><div class="border rounded-4 p-2 bg-light"><small class="d-block fw-bold text-warning text-dark">Jogo 3</small><small class="text-muted" style="font-size: 10px;">Meio</small></div></div>
+                        </div>
+                        <form action="/gerar-pura" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-danger w-100 btn-lg shadow rounded-pill fw-bold">CALCULAR E GERAR</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="estrategia" role="tabpanel">
+                <form action="/gerar-ouro" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="filtro_hidden" value="{{ filtro_atual }}">
+                    
+                    <div class="alert alert-warning bg-white border-warning shadow-sm rounded-4 mb-3">
+                        <div class="d-flex align-items-start"><i class="bi bi-gear-wide-connected fs-4 me-2 text-warning"></i><div class="small text-muted"><strong>Você no Comando:</strong> Escolha 7 a 9 fixos e o sistema completa.</div></div>
+                    </div>
+
+                    <div class="card shadow-sm mb-3">
+                        <div class="card-header bg-white"><h6 class="text-secondary fw-bold mb-0">1. Último Resultado</h6></div>
+                        <div class="card-body pb-2">
+                            <div class="d-flex flex-wrap justify-content-center gap-1">
+                                {% for n in range(1, 26) %}
+                                <div class="form-check form-check-inline m-1 p-0">
+                                    <input class="btn-check" type="checkbox" id="last{{n}}" name="numeros" value="{{n}}" {% if selecionados and n in selecionados %}checked{% endif %}>
+                                    <label class="btn btn-outline-secondary rounded-circle fw-bold" for="last{{n}}" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 11px;">{{ "%02d" % n }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% if ultimo_concurso_db %}
+                            <div class="mt-3 pt-2 border-top text-center"><button type="button" class="btn btn-sm btn-outline-secondary rounded-pill w-100 fw-bold" onclick="preencherUltimo('{{ ultimo_concurso_db.dezenas }}')">Carregar Último</button></div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm mb-3 border-primary">
+                        <div class="card-header bg-primary text-white"><div class="d-flex justify-content-between"><h6 class="mb-0 fw-bold">2. Seus Fixos</h6><span id="badgeContador" class="badge bg-light text-primary rounded-pill">0</span></div></div>
+                        <div class="card-body bg-light">
+                            <div class="d-flex flex-wrap justify-content-center gap-1">
+                                {% for n in range(1, 26) %}
+                                <div class="form-check form-check-inline m-1 p-0">
+                                    <input class="btn-check check-fixo" type="checkbox" id="fix{{n}}" name="fixos" value="{{n}}" {% if fixos_selecionados and n in fixos_selecionados %}checked{% endif %}>
+                                    <label class="btn btn-outline-primary rounded-circle fw-bold shadow-sm" for="fix{{n}}" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 11px;">{{ "%02d" % n }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <select name="qtd_jogos" class="form-select border-primary shadow-sm rounded-pill text-center fw-bold">
+                            {% for i in range(2, 11) %}
+                                <option value="{{ i }}" {% if jogos and jogos|length == i %}selected{% elif i == 4 %}selected{% endif %}>{{ i }} Jogos</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-loto w-100 btn-lg shadow mb-4">GERAR JOGOS</button>
+                </form>
+            </div>
+
+            <div class="tab-pane fade" id="m25" role="tabpanel">
+                <form action="/gerar-metodo-25" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="ultimo_resultado_25" id="inputUltimo25">
+                    
+                    <div class="alert alert-primary bg-white border-primary shadow-sm rounded-4 mb-3">
+                        <div class="d-flex align-items-start"><i class="bi bi-grid-3x3-gap-fill fs-4 me-2 text-primary"></i><div class="small text-muted"><strong>Cercamento Total:</strong> Usa as 25 bolas em 4 jogos travados.</div></div>
+                    </div>
+
+                    <div class="card shadow-sm mb-3 border-secondary rounded-4">
+                        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center"><h6 class="mb-0 text-secondary fw-bold">1. Sorteadas (3 Fixas)</h6>{% if ultimo_concurso_db %}<button type="button" class="btn btn-xs btn-outline-primary rounded-pill py-0" onclick="carregarMetodo25('{{ ultimo_concurso_db.dezenas }}')">Carregar</button>{% endif %}</div>
+                        <div class="card-body bg-light text-center rounded-bottom-4"><div id="containerSorteadas" class="d-flex flex-wrap justify-content-center gap-1"></div></div>
+                    </div>
+
+                    <div class="card shadow-sm mb-3 border-secondary rounded-4">
+                        <div class="card-header bg-white border-0"><h6 class="mb-0 text-secondary fw-bold">2. Ausentes (2 Fixas)</h6></div>
+                        <div class="card-body bg-light text-center rounded-bottom-4"><div id="containerAusentes" class="d-flex flex-wrap justify-content-center gap-1"></div></div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 btn-lg shadow rounded-pill fw-bold mb-4">GERAR 4 JOGOS</button>
+                </form>
+            </div>
+
+            <div class="tab-pane fade" id="surpresa" role="tabpanel">
+                <div class="card shadow border-success rounded-4 mb-4">
+                    <div class="card-body text-center p-4">
+                        <h4 class="text-success fw-bold mb-3"><i class="bi bi-stars"></i> Surpresinha</h4>
+                        <div class="alert alert-success bg-light border-success small text-start mb-4 rounded-4">
+                            <div class="d-flex"><i class="bi bi-lightbulb-fill text-success fs-5 me-2"></i><span class="text-muted"><strong>Sem palpite?</strong> Gere jogos aleatórios e equilibrados. Digite a quantidade.</span></div>
+                        </div>
+                        <form action="/surpresinha" method="POST">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="mb-4 w-50 mx-auto">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-success text-white border-success rounded-start-pill"><i class="bi bi-hash"></i></span>
+                                    <input type="number" name="qtd_surpresa" class="form-control border-success text-center fw-bold fs-5 rounded-end-pill" min="1" max="50" value="1" placeholder="Ex: 5" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-verde w-100 btn-lg shadow">GERAR AGORA</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="manual" role="tabpanel">
+                <div class="alert alert-dark bg-white border-dark shadow-sm rounded-4 mb-3">
+                    <div class="d-flex align-items-start"><i class="bi bi-pencil-fill fs-4 me-2 text-dark"></i><div class="small text-muted"><strong>Intuição:</strong> Preencha seu jogo manualmente.</div></div>
+                </div>
+                <div class="card shadow border-dark rounded-4 mb-4">
+                    <div class="card-header bg-dark text-white rounded-top-4 d-flex justify-content-between align-items-center"><h6 class="mb-0">Preencher Bilhete</h6><span id="badgeManual" class="badge bg-warning text-dark rounded-pill">0/15</span></div>
+                    <div class="card-body bg-light rounded-bottom-4">
+                        <div class="d-flex flex-wrap justify-content-center gap-1 mb-4">
+                            {% for n in range(1, 26) %}
+                            <div class="form-check form-check-inline m-1 p-0">
+                                <input class="btn-check check-manual" type="checkbox" id="man{{n}}" value="{{n}}">
+                                <label class="btn btn-outline-dark rounded-circle fw-bold shadow-sm" for="man{{n}}" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; font-size: 14px;">{{ "%02d" % n }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% if current_user.is_authenticated %}
+                            <button class="btn btn-dark w-100 btn-lg shadow rounded-pill" onclick="salvarJogoManualComBolinhas()">SALVAR JOGO</button>
+                        {% else %}
+                            <a href="/login" class="btn btn-outline-dark w-100 rounded-pill">Entre para salvar</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow mb-3 border-warning rounded-4">
+            <div class="card-header bg-warning text-dark border-0 rounded-top-4 pt-3 pb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold"><i class="bi bi-fire"></i> Números Quentes</h6>
+                    <select id="filtroSelect" class="form-select form-select-sm fw-bold border-dark w-auto rounded-pill" onchange="atualizarGrafico(this.value)">
+                        {% for i in range(5, 101, 5) %}
+                            <option value="{{ i }}" {% if filtro_atual == i %}selected{% endif %}>{{ i }} Jogos</option>
+                        {% endfor %}
+                        <option value="0" {% if filtro_atual == 0 %}selected{% endif %}>Total</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="position: relative; height: 200px; width: 100%;">
+                    <canvas id="myChart"></canvas>
+                </div>
+                <div id="listaQuentes" class="d-flex flex-wrap p-2 gap-2 justify-content-center border-top mt-3 pt-3">
+                    {% if estatisticas %}
+                        {% for num, qtd in estatisticas %}
+                        <div class="border rounded-3 px-2 py-1 text-center bg-light" style="min-width: 50px;">
+                            <span class="d-block fw-bold fs-6 text-danger">{{ "%02d" % num }}</span>
+                            <span class="small text-muted">{{ qtd }}x</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-muted small">Sem dados.</div>
+                    {% endif %}
+                </div>
+                <div class="alert alert-warning bg-light border-warning shadow-sm mt-3 mb-0 small rounded-3">
+                    <div class="d-flex align-items-start"><i class="bi bi-fire fs-4 me-2 text-warning text-dark"></i><div><strong>Termômetro:</strong> Barras altas são os números que mais saem.</div></div>
+                </div>
+            </div>
+        </div>
+
+        {% if jogos %}
+        <div class="card shadow border-success rounded-4">
+            <div class="card-header bg-success text-white border-0 rounded-top-4 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Palpites Gerados</h5>
+                <div>
+                    <button class="btn btn-light btn-sm fw-bold text-dark me-1 rounded-pill" onclick="window.print()">Imprimir</button>
+                    {% if current_user.is_authenticated %}
+                    <button class="btn btn-light btn-sm fw-bold text-success rounded-pill" onclick="salvarSelecionados()">Salvar</button>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover mb-0 text-center align-middle">
+                    <thead class="table-light"><tr>{% if current_user.is_authenticated %}<th><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>{% endif %}<th>Tipo</th><th>Dezenas</th><th>Zap</th></tr></thead>
+                    <tbody>
+                        {% for jogo in jogos %}
+                        <tr>
+                            {% if current_user.is_authenticated %}<td><input type="checkbox" class="game-check" value="{{ jogo.numeros_str }}|{{ jogo.tipo_limpo }}"></td>{% endif %}
+                            <td><span class="badge bg-dark rounded-pill">{{ jogo.tipo }}</span></td>
+                            <td>{% for num in jogo.numeros %}<span class="badge rounded-circle bg-warning text-dark p-1 ms-1">{{ "%02d" % num }}</span>{% endfor %}</td>
+                            <td><a href="https://wa.me/?text={{ jogo.zap }}" target="_blank" class="btn btn-success btn-sm p-1 px-2 rounded-circle"><i class="bi bi-whatsapp"></i></a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer bg-light text-center rounded-bottom-4">
+                <div class="d-flex justify-content-between align-items-center px-4">
+                    <small class="text-muted">{{ jogos|length }} jogos</small>
+                    <span class="fw-bold text-success fs-5">R$ {{ "%.2f"|format(jogos|length * 3.50)|replace('.', ',') }}</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div id="areaImpressao" class="d-none d-print-block p-4"><div class="text-center mb-4"><h3><i class="bi bi-ticket-perforated"></i> Palpites - Fechamentos Lotofácil</h3></div><div class="d-flex flex-wrap justify-content-center gap-4">{% for jogo in jogos %}<div style="border: 2px solid #000; padding: 15px; width: 220px; border-radius: 10px;"><p class="fw-bold text-center mb-2">{{ jogo.tipo }}</p><div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px;">{% for n in range(1, 26) %}{% if n in jogo.numeros %}<div style="width: 30px; height: 30px; background-color: #333; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 1px solid #000; -webkit-print-color-adjust: exact;">{{ "%02d" % n }}</div>{% else %}<div style="width: 30px; height: 30px; border: 1px solid #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ccc;">{{ "%02d" % n }}</div>{% endif %}{% endfor %}</div></div>{% endfor %}</div></div>
+<script>
+    // Configuração visual padrão do SweetAlert
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+    });
+
+    let meuGrafico = null;
+    {% if chart_labels %}
+    const ctx = document.getElementById('myChart');
+    if(ctx) {
+        meuGrafico = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: {{ chart_labels | safe }},
+                datasets: [{ label: 'Vezes Sorteado', data: {{ chart_data | safe }}, backgroundColor: 'rgba(255, 193, 7, 0.6)', borderColor: 'rgba(255, 193, 7, 1)', borderWidth: 1 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false } } }
+        });
+    }
+    {% endif %}
+
+    function atualizarGrafico(limite) {
+        const select = document.getElementById('filtroSelect'); select.disabled = true;
+        fetch(`/api/estatisticas/${limite}`).then(r => r.json()).then(data => {
+            if (meuGrafico) { meuGrafico.data.labels = data.labels; meuGrafico.data.datasets[0].data = data.data; meuGrafico.update(); }
+            document.getElementById('listaQuentes').innerHTML = data.html; select.disabled = false;
+        });
+    }
+
+    function carregarMetodo25(dezenasStr) {
+        const cS = document.getElementById('containerSorteadas'); const cA = document.getElementById('containerAusentes'); const inputHidden = document.getElementById('inputUltimo25');
+        cS.innerHTML = ''; cA.innerHTML = ''; inputHidden.value = dezenasStr;
+        const sorteadas = dezenasStr.split(',').map(n => parseInt(n.trim()));
+        const todas = Array.from({length: 25}, (_, i) => i + 1);
+        const ausentes = todas.filter(n => !sorteadas.includes(n));
+        sorteadas.forEach(n => { cS.innerHTML += `<div class="form-check form-check-inline m-1 p-0"><input class="btn-check check-sorteada" type="checkbox" name="fixas_sorteadas" id="sort${n}" value="${n}"><label class="btn btn-outline-secondary rounded-circle fw-bold" for="sort${n}" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">${n<10?'0'+n:n}</label></div>`; });
+        ausentes.forEach(n => { cA.innerHTML += `<div class="form-check form-check-inline m-1 p-0"><input class="btn-check check-ausente" type="checkbox" name="fixas_ausentes" id="aus${n}" value="${n}"><label class="btn btn-outline-secondary rounded-circle fw-bold" for="aus${n}" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">${n<10?'0'+n:n}</label></div>`; });
+        adicionarEventosLimite();
+    }
+
+    function adicionarEventosLimite() {
+        document.querySelectorAll('.check-sorteada').forEach(el => { el.addEventListener('change', (e) => { 
+            if (document.querySelectorAll('.check-sorteada:checked').length > 3) { 
+                e.target.checked = false; 
+                Swal.fire({ icon: 'warning', title: 'Atenção', text: 'Escolha apenas 3 Fixas Sorteadas!', confirmButtonColor: '#4A0E4E' });
+            } 
+        }); });
+        document.querySelectorAll('.check-ausente').forEach(el => { el.addEventListener('change', (e) => { 
+            if (document.querySelectorAll('.check-ausente:checked').length > 2) { 
+                e.target.checked = false; 
+                Swal.fire({ icon: 'warning', title: 'Atenção', text: 'Escolha apenas 2 Fixas Ausentes!', confirmButtonColor: '#4A0E4E' });
+            } 
+        }); });
+    }
+
+    const checksManual = document.querySelectorAll('.check-manual');
+    const badgeManual = document.getElementById('badgeManual');
+    checksManual.forEach(el => el.addEventListener('change', (e) => {
+        const sel = document.querySelectorAll('.check-manual:checked').length;
+        if(e.target.checked && sel > 15) { 
+            e.target.checked = false; 
+            Swal.fire({ icon: 'warning', title: 'Limite Atingido', text: 'Você já selecionou 15 números!', confirmButtonColor: '#4A0E4E' });
+            return; 
+        }
+        badgeManual.innerText = sel + "/15";
+        badgeManual.className = sel === 15 ? "badge bg-success animate-pulse rounded-pill" : "badge bg-warning text-dark rounded-pill";
+    }));
+
+    function salvarJogoManualComBolinhas() {
+        const sels = Array.from(document.querySelectorAll('.check-manual:checked')).map(e => e.value);
+        if(sels.length !== 15) { 
+            Swal.fire({ icon: 'error', title: 'Incompleto', text: 'Selecione exatamente 15 números antes de salvar.', confirmButtonColor: '#d33' });
+            return; 
+        }
+        const nums = sels.map(n => n.toString().padStart(2,'0')).join(', ');
+        const fd = new FormData(); fd.append('numeros_salvar', nums); fd.append('tipo_salvar', 'Manual (Grade)'); fd.append('csrf_token', document.querySelector('input[name="csrf_token"]').value);
+        
+        fetch('/salvar-jogo', {method:'POST', body:fd}).then(r=>r.json()).then(d=>{
+            if(d.success){
+                // ALERTA BONITO DE SUCESSO
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Show!',
+                    text: 'Jogo manual salvo com sucesso!',
+                    confirmButtonColor: '#00AC4B',
+                    background: '#fff url("https://www.transparenttextures.com/patterns/cubes.png")'
+                });
+                document.querySelectorAll('.check-manual:checked').forEach(c=>c.checked=false); 
+                badgeManual.innerText="0/15";
+                badgeManual.className = "badge bg-warning text-dark rounded-pill";
+            }
+        });
+    }
+
+    const checksFixo = document.querySelectorAll('.check-fixo');
+    const badgeContador = document.getElementById('badgeContador');
+    checksFixo.forEach(el => el.addEventListener('change', (e) => {
+        const qtd = document.querySelectorAll('.check-fixo:checked').length;
+        if(e.target.checked && qtd > 9) { 
+            e.target.checked = false; 
+            Swal.fire({ icon: 'warning', title: 'Calma aí!', text: 'O máximo são 9 números fixos.', confirmButtonColor: '#4A0E4E' });
+            return; 
+        }
+        badgeContador.innerText = qtd;
+    }));
+
+    function preencherUltimo(str) { document.querySelectorAll('input[name="numeros"]').forEach(c=>c.checked=false); str.split(',').map(n=>parseInt(n)).forEach(n=>document.getElementById('last'+n).checked=true); }
+    function toggleAll(source) { document.querySelectorAll('.game-check').forEach(c=>c.checked=source.checked); }
+    
+    function salvarSelecionados() {
+        const checks = document.querySelectorAll('.game-check:checked');
+        if(checks.length===0){ 
+            Swal.fire({ icon: 'info', title: 'Ops...', text: 'Selecione pelo menos um jogo para salvar.', confirmButtonColor: '#4A0E4E' });
+            return;
+        }
+        const jogos = []; checks.forEach(c=>{const p=c.value.split('|'); jogos.push({numeros:p[0], tipo:p[1]});});
+        
+        fetch('/salvar-multiplos', {method:'POST', headers:{'Content-Type':'application/json', 'X-CSRFToken':document.querySelector('input[name="csrf_token"]').value}, body:JSON.stringify({jogos:jogos})}).then(r=>r.json()).then(d=>{
+            if(d.success){
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Tudo Salvo!',
+                    text: d.message,
+                    confirmButtonColor: '#00AC4B'
+                });
+                document.getElementById('checkAll').checked=false; 
+                checks.forEach(c=>c.checked=false);
+            }
+        });
+    }
+</script>
+{% endblock %}

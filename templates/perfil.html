@@ -1,0 +1,403 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row no-print">
+    <div class="col-md-4 mb-4">
+        
+        <div class="card shadow-sm mb-3 border-0 rounded-4">
+            <div class="card-body d-flex align-items-center p-3">
+                <div class="me-3">
+                    {% if current_user.foto_perfil and current_user.foto_perfil != 'default.png' %}
+                        <img src="{{ url_for('static', filename='uploads/' + current_user.foto_perfil) }}" class="navbar-profile-img" style="width: 60px; height: 60px;">
+                    {% else %}
+                        <img src="https://ui-avatars.com/api/?name={{ current_user.nome }}&size=60&background=4A0E4E&color=fff" class="rounded-circle border border-2 border-warning">
+                    {% endif %}
+                </div>
+                <div>
+                    <h5 class="fw-bold mb-0 text-dark">{{ current_user.nome }}</h5>
+                    <small class="text-muted">{{ current_user.email }}</small>
+                    <div class="mt-1"><a href="#" data-bs-toggle="modal" data-bs-target="#editProfileModal" class="badge bg-light text-primary text-decoration-none border">Editar Perfil</a></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow border-warning mb-3 rounded-4">
+            <div class="card-header bg-warning text-center pb-0 rounded-top-4 border-0">
+                <h5 class="fw-bold text-dark mt-2 mb-3"><i class="bi bi-trophy-fill"></i> Conferir Concurso</h5>
+            </div>
+
+            <div class="card-body p-3">
+                <div class="mb-3">
+                    <label class="small text-muted fw-bold mb-1">Escolha o Concurso:</label>
+                    <select class="form-select fw-bold text-center border-dark" id="selectConcurso">
+                        <option value="" selected disabled>Selecione um resultado...</option>
+                        {% for res in ultimos_resultados %}
+                            <option value="{{ res.dezenas }}" data-data="{{ res.data_sorteio }}">Conc. {{ res.concurso }} ({{ res.data_sorteio }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <textarea name="resultado_oficial" id="inputResultado" class="form-control text-center fw-bold fs-5" rows="2" placeholder="01 02 03..." style="letter-spacing: 2px; color: var(--cor-roxo);"></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <div class="form-check form-switch d-flex justify-content-center gap-2 align-items-center">
+                        <input class="form-check-input" type="checkbox" id="checkFiltrarData">
+                        <label class="form-check-label small text-muted" for="checkFiltrarData">Filtrar pela data do jogo?</label>
+                    </div>
+                    <input type="date" id="dataFiltro" class="form-control form-control-sm text-center mt-2 d-none">
+                </div>
+
+                <button type="button" class="btn btn-dark w-100 fw-bold shadow-sm py-2 rounded-pill mb-2" onclick="abrirModoFoco()">
+                    <i class="bi bi-eye-fill"></i> CONFERÊNCIA VISUAL
+                </button>
+            </div>
+        </div>
+
+        {% if ultimos_resultados %}
+        <div class="card shadow border-info rounded-4">
+            <div class="card-header bg-info text-dark rounded-top-4 border-0">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-list-ol"></i> Lista de Sorteios</h6>
+            </div>
+            <div class="accordion accordion-flush rounded-bottom-4" id="accordionResultados" style="max-height: 400px; overflow-y: auto;">
+                {% for res in ultimos_resultados %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="heading{{ res.id }}">
+                        <button class="accordion-button collapsed fw-bold small py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ res.id }}">
+                            Conc. {{ res.concurso }} <span class="ms-auto text-muted" style="font-size: 11px;">{{ res.data_sorteio }}</span>
+                        </button>
+                    </h2>
+                    <div id="collapse{{ res.id }}" class="accordion-collapse collapse" data-bs-parent="#accordionResultados">
+                        <div class="accordion-body text-center bg-light p-2">
+                            <div class="d-flex flex-wrap justify-content-center gap-1 mb-2">
+                                {% for n in res.dezenas.split(', ') %}
+                                    <span class="badge rounded-circle bg-white text-dark border border-secondary" style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 10px;">{{ n }}</span>
+                                {% endfor %}
+                            </div>
+                            <button class="btn btn-xs btn-outline-primary fw-bold w-100 rounded-pill" onclick="copiarParaConferidor('{{ res.dezenas }}')">
+                                Usar este
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-8">
+        <div class="card shadow border-primary rounded-4 h-100">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center rounded-top-4 flex-wrap gap-2">
+                <h5 class="mb-0"><i class="bi bi-clock-history"></i> Meus Jogos</h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-light btn-sm text-dark fw-bold rounded-pill" onclick="imprimirHistorico()">
+                        <i class="bi bi-printer-fill"></i> Imprimir
+                    </button>
+                    
+                    <a href="/exportar/excel" class="btn btn-light btn-sm text-success fw-bold rounded-pill">
+                        <i class="bi bi-file-earmark-excel-fill"></i> Excel
+                    </a>
+
+                    <a href="/exportar/pdf" class="btn btn-light btn-sm text-danger fw-bold rounded-pill">
+                        <i class="bi bi-file-earmark-pdf-fill"></i> PDF
+                    </a>
+
+                    {% if jogos %}
+                    <button type="button" class="btn btn-danger btn-sm rounded-pill" data-bs-toggle="modal" data-bs-target="#modalLimparTudo" title="Apagar Tudo">
+                        <i class="bi bi-trash3-fill"></i>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 text-center align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Data</th>
+                            <th>Dezenas</th>
+                            <th style="width: 130px;">
+                                <button type="button" class="btn btn-sm btn-outline-dark py-0 rounded-pill fw-bold" onclick="toggleAllHistory(this)" data-status="unchecked" style="font-size: 11px;">
+                                    Selecionar Tudo
+                                </button>
+                            </th>
+                            <th>Del</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for jogo in jogos %}
+                        <tr class="linha-jogo" data-numeros="{{ jogo.numeros }}" data-data="{{ jogo.data_criacao.strftime('%Y-%m-%d') }}">
+                            <td><span class="fw-bold">{{ jogo.data_criacao.strftime('%d/%m') }}</span><br><small class="text-muted" style="font-size: 10px;">{{ jogo.tipo }}</small></td>
+                            <td>
+                                <div class="d-flex flex-wrap justify-content-center gap-1" style="max-width: 250px; margin: 0 auto;">
+                                    {% for n in jogo.numeros.split(', ') %}
+                                        <span class="badge rounded-circle bg-white text-dark border border-secondary" style="width: 25px; height: 25px; display: flex; align-items: center; justify-content: center;">{{ n }}</span>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td>
+                                <input type="checkbox" class="history-check form-check-input border-dark" value="{{ jogo.numeros }}|{{ jogo.tipo }}" style="width: 15px; height: 15px; cursor: pointer;">
+                            </td>
+                            <td>
+                                <form action="/excluir-jogo/{{ jogo.id }}" method="POST" onsubmit="return confirm('Apagar este jogo?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button class="btn btn-link text-danger p-0"><i class="bi bi-x-lg"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="py-5 text-muted">Nenhum jogo salvo. Vá em <a href="/">Apostar</a> para gerar jogos!</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalModoFoco" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content" style="background-color: rgba(30, 30, 30, 0.95); backdrop-filter: blur(5px);">
+            
+            <div class="modal-header border-bottom border-secondary bg-transparent text-white">
+                <div class="d-flex align-items-center gap-3">
+                    <h3 class="mb-0 fw-bold text-warning"><i class="bi bi-check-circle-fill"></i> Conferência</h3>
+                    <div class="vr bg-secondary mx-2"></div>
+                    <div>
+                        <small class="text-white-50 d-block">Dezenas do Resultado:</small>
+                        <span id="focoResultadoDisplay" class="fw-bold text-white fs-5">...</span>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline-light rounded-circle" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i></button>
+            </div>
+
+            <div class="modal-body overflow-auto custom-scrollbar">
+                <div class="container py-4">
+                    <div id="gridBilhetesFoco" class="row g-4 justify-content-center">
+                        </div>
+                </div>
+            </div>
+
+            <div class="modal-footer border-top border-secondary justify-content-center bg-transparent">
+                <div class="d-flex gap-4 text-white text-center">
+                    <div><span class="badge bg-success fs-5 rounded-pill" id="total15">0</span><br><small>15 pts</small></div>
+                    <div><span class="badge bg-primary fs-5 rounded-pill" id="total14">0</span><br><small>14 pts</small></div>
+                    <div><span class="badge bg-info fs-5 rounded-pill" id="total13">0</span><br><small>13 pts</small></div>
+                    <div><span class="badge bg-secondary fs-5 rounded-pill" id="total12">0</span><br><small>12 pts</small></div>
+                    <div><span class="badge bg-dark border border-secondary fs-5 rounded-pill" id="total11">0</span><br><small>11 pts</small></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="areaImpressao" class="d-none d-print-block p-4"></div>
+
+<div class="modal fade" id="editProfileModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-dark text-white"><h5 class="modal-title">Editar Perfil</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><form action="/editar-perfil" method="POST" enctype="multipart/form-data"><div class="modal-body"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><div class="mb-3"><label>Nome</label><input type="text" name="nome" class="form-control" value="{{ current_user.nome }}" required></div><div class="mb-3"><label>Telefone</label><input type="text" name="telefone" class="form-control" value="{{ current_user.telefone }}"></div><div class="mb-3"><label>Foto</label><input type="file" name="foto" class="form-control" accept="image/*"></div></div><div class="modal-footer"><button type="submit" class="btn btn-primary">Salvar</button></div></form></div></div></div>
+<div class="modal fade" id="modalLimparTudo" tabindex="-1"><div class="modal-dialog"><div class="modal-content border-danger"><div class="modal-header bg-danger text-white"><h5 class="modal-title">Zona de Perigo</h5><button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div><form action="/excluir-todos" method="POST"><div class="modal-body text-center"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><p class="text-danger fw-bold">Apagar TUDO? Digite sua senha:</p><input type="password" name="senha_confirmacao" class="form-control" required></div><div class="modal-footer"><button type="submit" class="btn btn-danger">CONFIRMAR</button></div></form></div></div></div>
+
+<script>
+    // --- LÓGICA DO CONFERIDOR ---
+    const selectConcurso = document.getElementById('selectConcurso');
+    const inputResultado = document.getElementById('inputResultado');
+    const checkData = document.getElementById('checkFiltrarData');
+    const inputData = document.getElementById('dataFiltro');
+
+    function converterData(dataBR) {
+        if (!dataBR) return '';
+        const partes = dataBR.split('/');
+        if (partes.length === 3) { return `${partes[2]}-${partes[1]}-${partes[0]}`; }
+        return '';
+    }
+
+    selectConcurso.addEventListener('change', function() {
+        let numsLimpos = this.value.replace(/[^0-9\s]/g, '').trim();
+        inputResultado.value = numsLimpos;
+        // Não altera mais a data automaticamente para não travar o filtro
+    });
+
+    checkData.addEventListener('change', function() {
+        inputData.classList.toggle('d-none');
+        if(!this.checked) inputData.value = '';
+    });
+
+    function copiarParaConferidor(numeros) {
+        let numsLimpos = numeros.replace(/,/g, '');
+        inputResultado.value = numsLimpos;
+        // Scroll suave até o topo
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Foca no input
+        inputResultado.focus();
+        // Efeito visual (opcional)
+        inputResultado.style.backgroundColor = '#fff3cd';
+        setTimeout(() => { inputResultado.style.backgroundColor = ''; }, 500);
+    }
+
+    // --- LÓGICA DO MODO FOCO (SweetAlert2 integrado) ---
+    function abrirModoFoco() {
+        const resultadoStr = inputResultado.value.trim();
+        
+        if (!resultadoStr) { 
+            Swal.fire({ 
+                icon: 'warning', 
+                title: 'Atenção', 
+                text: 'Selecione um concurso ou digite o resultado para conferir.', 
+                confirmButtonColor: '#FFC107',
+                iconColor: '#FFC107'
+            });
+            return; 
+        }
+
+        const sorteio = resultadoStr.match(/\d+/g).map(n => parseInt(n));
+        
+        if (sorteio.length !== 15) { 
+            Swal.fire({ 
+                icon: 'error', 
+                title: 'Erro', 
+                text: 'O resultado precisa ter exatamente 15 dezenas.', 
+                confirmButtonColor: '#4A0E4E' 
+            });
+            return; 
+        }
+
+        const linhasJogos = document.querySelectorAll('.linha-jogo');
+        const filtroData = checkData.checked ? inputData.value : null;
+        
+        const grid = document.getElementById('gridBilhetesFoco');
+        grid.innerHTML = '';
+        
+        let stats = {15:0, 14:0, 13:0, 12:0, 11:0};
+        let encontrouAlgum = false;
+
+        linhasJogos.forEach(linha => {
+            if (filtroData && linha.dataset.data !== filtroData) return;
+
+            encontrouAlgum = true;
+            const meusNumeros = linha.dataset.numeros.split(', ').map(n => parseInt(n));
+            const acertos = meusNumeros.filter(n => sorteio.includes(n));
+            const qtdAcertos = acertos.length;
+            if (qtdAcertos >= 11) stats[qtdAcertos]++;
+
+            const col = document.createElement('div');
+            col.className = 'col-auto';
+            
+            let corBorda = 'border-secondary';
+            let bgCard = 'bg-dark';
+            let textoAcerto = '';
+            
+            if(qtdAcertos === 15) { corBorda = 'border-success border-3'; bgCard = 'bg-success bg-opacity-25'; textoAcerto = '🏆 15 PONTOS!'; }
+            else if(qtdAcertos === 14) { corBorda = 'border-primary border-2'; bgCard = 'bg-primary bg-opacity-25'; textoAcerto = '🤩 14 PONTOS!'; }
+            else if(qtdAcertos >= 11) { corBorda = 'border-info'; bgCard = 'bg-secondary bg-opacity-25'; textoAcerto = `🙂 ${qtdAcertos} Pontos`; }
+
+            let htmlBolinhas = '<div class="d-flex flex-wrap gap-1 justify-content-center" style="width: 180px;">';
+            
+            meusNumeros.sort((a,b)=>a-b).forEach(n => {
+                const acertou = sorteio.includes(n);
+                const estilo = acertou 
+                    ? 'background-color: #FFC107; color: #000; font-weight: bold; border: 2px solid #fff; box-shadow: 0 0 10px #FFC107;' 
+                    : 'background-color: #fff; color: #ccc; opacity: 0.5;';
+                
+                htmlBolinhas += `<div style="width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; ${estilo}">${n < 10 ? '0'+n : n}</div>`;
+            });
+            htmlBolinhas += '</div>';
+
+            col.innerHTML = `
+                <div class="card ${bgCard} ${corBorda} text-white shadow-lg" style="width: 220px;">
+                    <div class="card-body text-center">
+                        ${textoAcerto ? `<div class="badge bg-warning text-dark w-100 mb-2 fw-bold animate-pulse">${textoAcerto}</div>` : '<div class="mb-2 text-white-50 small">Não premiado</div>'}
+                        ${htmlBolinhas}
+                    </div>
+                </div>
+            `;
+            grid.appendChild(col);
+        });
+
+        if (!encontrouAlgum) {
+            grid.innerHTML = '<div class="text-white text-center py-5"><h3>Nenhum jogo encontrado.</h3></div>';
+        }
+
+        document.getElementById('focoResultadoDisplay').innerText = resultadoStr;
+        document.getElementById('total15').innerText = stats[15];
+        document.getElementById('total14').innerText = stats[14];
+        document.getElementById('total13').innerText = stats[13];
+        document.getElementById('total12').innerText = stats[12];
+        document.getElementById('total11').innerText = stats[11];
+
+        const modal = new bootstrap.Modal(document.getElementById('modalModoFoco'));
+        modal.show();
+    }
+
+    // --- FUNÇÕES DE SELEÇÃO E IMPRESSÃO ---
+    function toggleAllHistory(btn) {
+        const checkboxes = document.querySelectorAll('.history-check');
+        const status = btn.getAttribute('data-status');
+
+        if (status === 'unchecked') {
+            checkboxes.forEach(c => c.checked = true);
+            btn.setAttribute('data-status', 'checked');
+            btn.classList.remove('btn-outline-dark');
+            btn.classList.add('btn-dark');
+            btn.innerText = "Desmarcar";
+        } else {
+            checkboxes.forEach(c => c.checked = false);
+            btn.setAttribute('data-status', 'unchecked');
+            btn.classList.remove('btn-dark');
+            btn.classList.add('btn-outline-dark');
+            btn.innerText = "Selecionar Tudo";
+        }
+    }
+
+    function imprimirHistorico() {
+        const checkedBoxes = document.querySelectorAll('.history-check:checked');
+        if (checkedBoxes.length === 0) { 
+            Swal.fire({ 
+                icon: 'info', 
+                title: 'Nada Selecionado', 
+                text: 'Selecione os jogos que deseja imprimir.', 
+                confirmButtonColor: '#4A0E4E' 
+            });
+            return; 
+        }
+
+        const area = document.getElementById('areaImpressao');
+        area.innerHTML = '<div class="text-center mb-4"><h3><i class="bi bi-ticket-perforated"></i> Palpites - Fechamentos Lotofácil</h3></div><div class="d-flex flex-wrap justify-content-center gap-4" id="gridImpressao"></div>';
+        
+        const grid = document.getElementById('gridImpressao');
+
+        checkedBoxes.forEach(box => {
+            const parts = box.value.split('|');
+            const numeros = parts[0].split(',').map(n => parseInt(n.trim()));
+            const tipo = parts[1];
+            
+            let htmlJogo = `
+            <div style="border: 2px solid #000; padding: 15px; width: 220px; border-radius: 10px;">
+                <p class="fw-bold text-center mb-2">${tipo}</p>
+                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px;">`;
+
+            for (let i = 1; i <= 25; i++) {
+                if (numeros.includes(i)) {
+                    htmlJogo += `<div style="width: 30px; height: 30px; background-color: #333; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 1px solid #000; -webkit-print-color-adjust: exact;">${i < 10 ? '0'+i : i}</div>`;
+                } else {
+                    htmlJogo += `<div style="width: 30px; height: 30px; border: 1px solid #ccc; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ccc;">${i < 10 ? '0'+i : i}</div>`;
+                }
+            }
+
+            htmlJogo += `</div><p class="text-center mt-2 small" style="border-top: 1px dashed #000; padding-top: 5px;">R$ 3,50</p></div>`;
+            grid.innerHTML += htmlJogo;
+        });
+
+        window.print();
+    }
+</script>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #333; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #888; }
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    .animate-pulse { animation: pulse 1.5s infinite; }
+</style>
+{% endblock %}

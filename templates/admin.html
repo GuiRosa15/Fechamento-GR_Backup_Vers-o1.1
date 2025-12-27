@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card shadow border-dark mb-3">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="bi bi-plus-circle"></i> Novo Resultado</h5>
+            </div>
+            <div class="card-body">
+                <form action="/admin/novo-resultado" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-2">
+                        <label class="fw-bold small">Concurso</label>
+                        <input type="number" name="concurso" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="fw-bold small">Data</label>
+                        <input type="text" name="data" class="form-control form-control-sm" placeholder="DD/MM/AAAA" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="fw-bold small">Dezenas</label>
+                        <textarea name="dezenas" class="form-control form-control-sm" rows="2" placeholder="01 02 03..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100 btn-sm fw-bold">SALVAR</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card shadow border-secondary mb-4">
+            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Resultados (Total: {{ total_res }})</h6>
+                
+                <form action="/admin" method="GET" class="d-flex">
+                    <input type="text" name="q" class="form-control form-control-sm me-2" placeholder="Buscar Concurso ou Data..." value="{{ busca }}">
+                    <button type="submit" class="btn btn-light btn-sm"><i class="bi bi-search"></i></button>
+                    {% if busca %}
+                        <a href="/admin" class="btn btn-dark btn-sm ms-1">X</a>
+                    {% endif %}
+                </form>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-sm table-hover mb-0 text-center">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Conc.</th>
+                                <th>Data</th>
+                                <th>Dezenas</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for res in resultados %}
+                            <tr>
+                                <td class="fw-bold">{{ res.concurso }}</td>
+                                <td class="small">{{ res.data_sorteio }}</td>
+                                <td class="small text-muted text-break" style="max-width: 250px;">{{ res.dezenas }}</td>
+                                <td>
+                                    <form action="/admin/excluir-resultado/{{ res.id }}" method="POST" onsubmit="return confirm('Apagar?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-link text-danger p-0 btn-sm"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="4" class="py-3">Nenhum resultado encontrado.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow border-dark">
+            <div class="card-header bg-dark text-white p-2 ps-3">
+                <h6 class="mb-0">Usuários Cadastrados</h6>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-striped mb-0 text-center">
+                    <tbody>
+                        {% for u in usuarios %}
+                        <tr>
+                            <td>{{ u.id }}</td>
+                            <td class="text-start fw-bold">{{ u.nome }}</td>
+                            <td>{{ u.email }}</td>
+                            <td>{% if u.is_admin %}<span class="badge bg-danger">ADMIN</span>{% else %}<span class="badge bg-secondary">User</span>{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

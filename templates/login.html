@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <div class="card shadow">
+            <div class="card-header navbar-custom text-white text-center">
+                <h4 class="mb-0">🔐 Login</h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Email</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Senha</label>
+                        <input type="password" name="senha" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-loto w-100 btn-lg fw-bold">ENTRAR</button>
+                </form>
+            </div>
+            <div class="card-footer text-center bg-light">
+                <a href="/registro" class="btn btn-outline-dark btn-sm w-50">Criar Conta Grátis</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

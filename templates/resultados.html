@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center no-print">
+    <div class="col-md-10">
+        
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="fw-bold" style="color: var(--cor-roxo);"><i class="bi bi-list-stars"></i> Resultados Oficiais</h3>
+        </div>
+
+        <div class="alert alert-warning bg-white border-warning shadow-sm rounded-4 mb-4">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <span class="d-flex align-items-center justify-content-center rounded-circle bg-warning text-dark" style="width: 50px; height: 50px;">
+                        <i class="bi bi-lightbulb-fill fs-4"></i>
+                    </span>
+                </div>
+                <div>
+                    <h6 class="fw-bold text-dark mb-1">Por que conferir o histórico?</h6>
+                    <p class="mb-0 small text-muted">
+                        Analisar os sorteios passados é a chave para encontrar padrões! Use a busca abaixo para filtrar por <strong>Número do Concurso</strong> ou <strong>Data</strong> e refine sua estratégia.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-body p-4">
+                <form action="{{ url_for('resultados') }}" method="GET" class="d-flex gap-2">
+                    <input type="text" name="q" class="form-control form-control-lg rounded-pill border-secondary" 
+                           placeholder="Buscar Concurso (ex: 3050) ou Data (ex: 25/12)..." 
+                           value="{{ busca }}" style="font-weight: 600;">
+                    <button type="submit" class="btn btn-warning btn-lg rounded-circle shadow-sm" style="width: 50px; height: 50px; padding: 0;">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    {% if busca %}
+                    <a href="{{ url_for('resultados') }}" class="btn btn-outline-secondary btn-lg rounded-circle shadow-sm d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; padding: 0;" title="Limpar Busca">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+
+        {% for resultado in pagination.items %}
+        <div class="card shadow-sm border-0 rounded-4 mb-3">
+            <div class="card-body d-flex flex-wrap align-items-center justify-content-between p-3">
+                
+                <div class="mb-2 mb-md-0">
+                    <h5 class="fw-bold mb-0 text-dark">CONCURSO {{ resultado.concurso }}</h5>
+                    <span class="badge bg-secondary rounded-pill"><i class="bi bi-calendar-event"></i> {{ resultado.data_sorteio }}</span>
+                </div>
+
+                <div class="d-flex flex-wrap gap-1 justify-content-center">
+                    {% for n in resultado.dezenas.split(', ') %}
+                    <span class="d-flex align-items-center justify-content-center rounded-circle bg-white border border-dark fw-bold text-dark" 
+                          style="width: 32px; height: 32px; font-size: 13px; box-shadow: 2px 2px 0px rgba(0,0,0,0.1);">
+                        {{ n }}
+                    </span>
+                    {% endfor %}
+                </div>
+
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-emoji-frown fs-1 text-muted"></i>
+            <p class="text-muted mt-2 fw-bold">Nenhum resultado encontrado.</p>
+        </div>
+        {% endfor %}
+
+        <nav class="mt-4 mb-5">
+            <ul class="pagination justify-content-center">
+                {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link rounded-pill border-0 shadow-sm me-2 fw-bold text-dark" href="{{ url_for('resultados', page=pagination.prev_num, q=busca) }}">
+                        <i class="bi bi-arrow-left"></i> Anterior
+                    </a>
+                </li>
+                {% endif %}
+                
+                <li class="page-item disabled">
+                    <span class="page-link border-0 bg-transparent fw-bold text-muted">Página {{ pagination.page }} de {{ pagination.pages }}</span>
+                </li>
+
+                {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link rounded-pill border-0 shadow-sm ms-2 fw-bold text-dark" href="{{ url_for('resultados', page=pagination.next_num, q=busca) }}">
+                        Próxima <i class="bi bi-arrow-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+
+    </div>
+</div>
+{% endblock %}

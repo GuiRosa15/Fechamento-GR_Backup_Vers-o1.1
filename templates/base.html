@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fechamentos Lotofácil</title>
+    
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        :root { --cor-roxo: #4A0E4E; --cor-verde: #00AC4B; --cor-dourado: #FFC107; --cor-fundo: #F4F6F8; --borda-suave: 15px; }
+        body { background-color: var(--cor-fundo); font-family: 'Nunito', sans-serif; color: #333; display: flex; flex-direction: column; min-height: 100vh; }
+        
+        .navbar-custom { background-color: var(--cor-roxo); box-shadow: 0 4px 15px rgba(74, 14, 78, 0.3); padding: 10px 0; }
+        .navbar-brand img { max-height: 60px; width: auto; filter: drop-shadow(0px 2px 2px rgba(0,0,0,0.3)); }
+        .navbar-profile-img { width: 42px; height: 42px; object-fit: cover; border-radius: 50%; border: 2px solid var(--cor-dourado); }
+
+        .btn-loto { background-color: var(--cor-roxo); color: white; border-radius: 50px; font-weight: 700; border: none; transition: transform 0.2s; }
+        .btn-loto:hover { background-color: #6a1b6f; color: white; transform: scale(1.05); }
+        .btn-verde { background-color: var(--cor-verde); color: white; border-radius: 50px; font-weight: 700; border: none; transition: transform 0.2s; }
+        .btn-verde:hover { background-color: #008f3e; color: white; transform: scale(1.05); }
+        
+        .btn-apostar-nav { background-color: var(--cor-dourado); color: var(--cor-roxo); font-weight: 800; border-radius: 50px; padding: 5px 20px; box-shadow: 0 4px 0 #d39e00; transition: transform 0.1s; }
+        .btn-apostar-nav:active { transform: translateY(4px); box-shadow: none; }
+        .btn-apostar-nav:hover { background-color: #ffca2c; color: var(--cor-roxo); }
+
+        .card { border: none; border-radius: var(--borda-suave); box-shadow: 0 5px 15px rgba(0,0,0,0.05); overflow: hidden; }
+        .card-header { background-color: white; border-bottom: 2px solid #f0f0f0; font-weight: 800; padding: 15px; }
+
+        .content-wrapper { flex: 1; }
+        footer { background-color: var(--cor-roxo); color: white; padding: 30px 0; margin-top: 50px; border-top: 4px solid var(--cor-verde); }
+        footer a { color: var(--cor-dourado); text-decoration: none; font-weight: bold; }
+
+        .btn-check:checked + .btn-outline-secondary, .btn-check:checked + .btn-outline-primary, .btn-check:checked + .btn-outline-dark { transform: scale(1.1); box-shadow: 0 2px 5px rgba(0,0,0,0.2); font-weight: 800; }
+
+        @media print { .no-print { display: none !important; } #areaImpressao { display: block !important; } }
+        
+        #chat-btn { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background-color: var(--cor-verde); color: white; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-size: 30px; cursor: pointer; z-index: 1000; transition: 0.3s; }
+        #chat-btn:hover { transform: scale(1.1); }
+        #chat-window { position: fixed; bottom: 90px; right: 20px; width: 350px; height: 450px; background-color: white; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); z-index: 1000; display: none; flex-direction: column; overflow: hidden; border: 1px solid #ddd; }
+        .chat-header { background-color: var(--cor-verde); color: white; padding: 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .chat-body { flex: 1; padding: 15px; overflow-y: auto; background-color: #f0f2f5; font-size: 0.9rem; }
+        .chat-footer { padding: 10px; background-color: white; border-top: 1px solid #ddd; display: flex; gap: 5px; }
+        .msg { margin-bottom: 10px; max-width: 80%; padding: 8px 12px; border-radius: 15px; line-height: 1.4; }
+        .msg-user { background-color: var(--cor-roxo); color: white; align-self: flex-end; margin-left: auto; border-bottom-right-radius: 2px; }
+        .msg-bot { background-color: white; color: #333; align-self: flex-start; border: 1px solid #ddd; border-bottom-left-radius: 2px; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom no-print">
+        <div class="container">
+            <a class="navbar-brand p-0" href="/">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Fechamentos Lotofácil">
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center gap-3">
+                    <li class="nav-item"><a class="nav-link text-white-50 small" href="https://www.loteriasonline.caixa.gov.br/silce-web/#/home" target="_blank">Site Caixa</a></li>
+                    <li class="nav-item"><a class="nav-link text-white fw-bold" href="{{ url_for('resultados') }}"><i class="bi bi-list-ol"></i> Resultados</a></li>
+                    <li class="nav-item"><a class="nav-link text-warning fw-bold" href="#" data-bs-toggle="modal" data-bs-target="#modalSimulador"><i class="bi bi-joystick"></i> Simulador</a></li>
+
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.is_admin %}
+                        <li class="nav-item"><a class="nav-link text-warning fw-bold" href="/admin">Admin</a></li>
+                        {% endif %}
+                        <li class="nav-item"><a class="btn-apostar-nav text-decoration-none" href="/"><i class="bi bi-play-circle-fill"></i> APOSTAR</a></li>
+                        <li class="nav-item"><a class="nav-link text-white fw-bold" href="/meus-jogos">Meus Jogos</a></li>
+                        <li class="nav-item"><a class="nav-link text-white" href="/logout">Sair</a></li>
+                        <li class="nav-item">
+                            {% if current_user.foto_perfil and current_user.foto_perfil != 'default.png' %}
+                                <img src="{{ url_for('static', filename='uploads/' + current_user.foto_perfil) }}" class="navbar-profile-img">
+                            {% else %}
+                                <img src="https://ui-avatars.com/api/?name={{ current_user.nome }}&background=random&color=fff&bold=true" class="navbar-profile-img">
+                            {% endif %}
+                        </li>
+                    {% else %}
+                        <li class="nav-item"><a class="nav-link text-white" href="/login">Entrar</a></li>
+                        <li class="nav-item"><a class="btn btn-sm btn-verde px-3" href="/registro">Criar Conta</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4 content-wrapper">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm no-print rounded-4" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </div>
+
+    <div class="modal fade" id="modalSimulador" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content rounded-4 border-0">
+                <div class="modal-header bg-dark text-white rounded-top-4">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-joystick"></i> Simulador Histórico</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <div class="alert alert-light border rounded-3 small mb-3">
+                        <i class="bi bi-info-circle-fill text-primary"></i> Teste se seus números já ganharam no passado.
+                    </div>
+                    <p class="fw-bold mb-2">Selecione 15 dezenas:</p>
+                    <div class="d-flex flex-wrap justify-content-center gap-1 mb-3">
+                        {% for n in range(1, 26) %}
+                        <div class="form-check form-check-inline m-1 p-0">
+                            <input class="btn-check check-simula" type="checkbox" id="sim{{n}}" value="{{n}}">
+                            <label class="btn btn-outline-dark rounded-circle fw-bold shadow-sm" for="sim{{n}}" style="width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 13px;">{{ "%02d" % n }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="mb-4"><span id="badgeSimula" class="badge bg-secondary rounded-pill">0/15</span></div>
+                    <div class="d-flex justify-content-center gap-2">
+                        <select id="filtroSimulacaoModal" class="form-select text-center fw-bold rounded-pill border-secondary" style="max-width: 160px;">
+                            <option value="10">Últimos 10</option><option value="50">Últimos 50</option><option value="0" selected>Todo Histórico</option>
+                        </select>
+                        <button class="btn btn-warning fw-bold text-dark rounded-pill px-4" onclick="simularJogoModal()"><i class="bi bi-search"></i> Analisar</button>
+                    </div>
+                    <div id="resultadoSimulacaoModal" class="alert alert-secondary d-none small mt-3 mb-0 text-start border-0 rounded-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="chat-btn" onclick="toggleChat()" class="no-print"><i class="bi bi-robot"></i></div>
+    <div id="chat-window" class="no-print">
+        <div class="chat-header"><span><i class="bi bi-stars"></i> Consultor GR</span><button onclick="toggleChat()" class="btn btn-sm text-white"><i class="bi bi-x-lg"></i></button></div>
+        <div class="chat-body" id="chat-content"><div class="msg msg-bot">Olá! Sou seu Consultor GR 🤖. Vamos planejar seus jogos?</div></div>
+        <div class="chat-footer"><input type="text" id="chat-input" class="form-control form-control-sm rounded-pill" placeholder="Pergunte aqui..." onkeypress="handleEnter(event)"><button onclick="enviarMensagem()" class="btn btn-sm btn-success rounded-circle"><i class="bi bi-send-fill"></i></button></div>
+    </div>
+
+    <footer class="no-print text-center">
+        <div class="container">
+            <h4 style="color: #FFC107;">Fechamentos Lotofácil 🍀</h4>
+            <p class="small opacity-75 mb-0">Sua ferramenta estratégica.<br><strong>Versão 1.1 - Visual Pro</strong> - &copy; 2025 Fechamentos Lotofácil</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        const checksSimula = document.querySelectorAll('.check-simula');
+        const badgeSimula = document.getElementById('badgeSimula');
+        checksSimula.forEach(el => {
+            el.addEventListener('change', (e) => {
+                const qtd = document.querySelectorAll('.check-simula:checked').length;
+                if(e.target.checked && qtd > 15) { 
+                    e.target.checked = false; 
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Atenção',
+                        text: 'Selecione apenas 15 números para simular.',
+                        confirmButtonColor: '#4A0E4E'
+                    });
+                    return; 
+                }
+                badgeSimula.innerText = qtd + "/15"; badgeSimula.className = qtd === 15 ? "badge bg-success rounded-pill" : "badge bg-secondary rounded-pill";
+            });
+        });
+        function simularJogoModal() {
+            const selecionados = Array.from(document.querySelectorAll('.check-simula:checked')).map(el => el.value);
+            if (selecionados.length !== 15) { 
+                Swal.fire({ icon: 'warning', title: 'Atenção', text: 'Selecione exatamente 15 números.', confirmButtonColor: '#4A0E4E' });
+                return; 
+            }
+            const numsStr = selecionados.map(n => n.toString().padStart(2, '0')).join(' ');
+            const btn = document.querySelector('button[onclick="simularJogoModal()"]');
+            const resDiv = document.getElementById('resultadoSimulacaoModal');
+            const filtro = document.getElementById('filtroSimulacaoModal').value;
+            btn.innerHTML = '...';
+            const formData = new FormData(); formData.append('dezenas_simular', numsStr); formData.append('filtro_simulacao', filtro);
+            let token = document.querySelector('input[name="csrf_token"]')?.value; formData.append('csrf_token', token);
+            fetch('/simular', {method: 'POST', body: formData}).then(r => r.json()).then(data => {
+                resDiv.classList.remove('d-none'); resDiv.className = data.success ? 'alert alert-success mt-3 mb-0 rounded-3' : 'alert alert-danger mt-3 mb-0 rounded-3';
+                resDiv.innerHTML = data.message; btn.innerHTML = '<i class="bi bi-search"></i> Analisar';
+            });
+        }
+        function toggleChat() { const win = document.getElementById('chat-window'); win.style.display = win.style.display === 'flex' ? 'none' : 'flex'; if(win.style.display==='flex') document.getElementById('chat-input').focus(); }
+        function handleEnter(e) { if(e.key === 'Enter') enviarMensagem(); }
+        function enviarMensagem() {
+            const input = document.getElementById('chat-input'); const texto = input.value.trim(); if(!texto) return;
+            const chatBody = document.getElementById('chat-content'); chatBody.innerHTML += `<div class="msg msg-user">${texto}</div>`; input.value = ''; chatBody.scrollTop = chatBody.scrollHeight;
+            fetch('/ia-chat', { method: 'POST', headers: {'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('input[name="csrf_token"]')?.value}, body: JSON.stringify({msg: texto}) })
+            .then(r => r.json()).then(data => { chatBody.innerHTML += `<div class="msg msg-bot">${data.resposta}</div>`; chatBody.scrollTop = chatBody.scrollHeight; });
+        }
+    </script>
+</body>
+</html>
